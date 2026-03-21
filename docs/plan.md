@@ -159,9 +159,12 @@ Pages (App Router)
 - **Gemini free tier** — sufficient for development and moderate usage
 - **No real-time collaboration** — single-user practice tool, out of scope
 - **No problem database** — all problems generated on-the-fly by Gemini (no caching/seeding for MVP)
-- **System Design topic** — handled as text-based Q&A, no diagramming tool (Monaco for notes)
+- **System Design topic** — MVP: text-based Q&A using Monaco Editor (same flow as DSA but "Run" button disabled, no code execution). Post-MVP: upgrade to structured form with sections (Requirements, API Design, Data Model, Scaling) — purely additive change, no refactoring needed
 
 ## Further Considerations
 1. **Problem caching:** Should generated problems be cached in MongoDB to avoid re-generating similar problems and allow sharing? Recommend deferring to post-MVP.
 2. **Judge0 rate limits:** The free RapidAPI tier has ~100 submissions/day. For heavier usage, consider self-hosting Judge0 via Docker. Recommend starting with hosted and monitoring usage.
 3. **Code execution timeout:** Judge0 default is 5s. For DP/graph problems, may need 10s. Configurable per request.
+
+### Post-MVP Enhancements
+1. **Structured System Design form** — replace text-based Q&A with `SystemDesignForm.tsx` component containing sectioned text areas (Requirements, API Design, Data Model, Scaling). Conditional rendering in practice page: if `topic === 'system-design'`, show form instead of Monaco Editor. Tweak AI review prompt to evaluate each section separately.
