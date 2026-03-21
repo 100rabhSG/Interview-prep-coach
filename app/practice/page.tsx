@@ -6,6 +6,7 @@ import { Topic, Difficulty, Language, Problem } from '@/types';
 import { Button } from '@/components/ui/button';
 import ProblemPanel from '@/components/ProblemPanel';
 import CodeEditor from '@/components/CodeEditor';
+import HintDialog from '@/components/HintDialog';
 import { Loader2, RefreshCw } from 'lucide-react';
 
 const VALID_TOPICS: Topic[] = [
@@ -25,13 +26,15 @@ export default function PracticePage() {
   const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [language, setLanguage] = useState<Language>('python');
+  const [language, setLanguage] = useState<Language>('cpp');
   const [code, setCode] = useState('');
-  const [hintsUsed, setHintsUsed] = useState(0);
+  const [hints, setHints] = useState<string[]>([]);
+  const [hintDialogOpen, setHintDialogOpen] = useState(false);
 
   const generateProblem = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setHints([]);
     try {
       const res = await fetch('/api/problems/generate', {
         method: 'POST',
@@ -92,9 +95,17 @@ export default function PracticePage() {
         <ProblemPanel
           problem={problem}
           difficulty={difficulty}
-          hintsUsed={hintsUsed}
-          onRequestHint={() => setHintsUsed((prev) => Math.min(prev + 1, 3))}
+          hintsUsed={hints.length}
+          onRequestHint={() => setHintDialogOpen(true)}
           onNewProblem={generateProblem}
+        />
+        <HintDialog
+          open={hintDialogOpen}
+          onOpenChange={setHintDialogOpen}
+          problemTitle={problem.title}
+          problemDescription={problem.description}
+          hints={hints}
+          onHintReceived={(hint) => setHints((prev) => [...prev, hint])}
         />
       </div>
 
