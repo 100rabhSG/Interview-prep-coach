@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Topic, Difficulty, Language, Problem } from '@/types';
 import { Button } from '@/components/ui/button';
+import ProblemPanel from '@/components/ProblemPanel';
 import { Loader2, RefreshCw } from 'lucide-react';
 
 const VALID_TOPICS: Topic[] = [
@@ -25,6 +26,7 @@ export default function PracticePage() {
   const [error, setError] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>('python');
   const [code, setCode] = useState('');
+  const [hintsUsed, setHintsUsed] = useState(0);
 
   const generateProblem = useCallback(async () => {
     setLoading(true);
@@ -86,8 +88,13 @@ export default function PracticePage() {
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
       {/* Left Panel — Problem Description */}
       <div className="w-1/2 border-r overflow-y-auto p-6">
-        <p className="text-muted-foreground text-sm">Problem panel placeholder — Step 14</p>
-        <h2 className="text-xl font-bold mt-2">{problem.title}</h2>
+        <ProblemPanel
+          problem={problem}
+          difficulty={difficulty}
+          hintsUsed={hintsUsed}
+          onRequestHint={() => setHintsUsed((prev) => Math.min(prev + 1, 3))}
+          onNewProblem={generateProblem}
+        />
       </div>
 
       {/* Right Panel — Code Editor */}
