@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Topic, Difficulty, Language, Problem } from '@/types';
 import { Button } from '@/components/ui/button';
 import ProblemPanel from '@/components/ProblemPanel';
+import CodeEditor from '@/components/CodeEditor';
 import { Loader2, RefreshCw } from 'lucide-react';
 
 const VALID_TOPICS: Topic[] = [
@@ -99,7 +100,14 @@ export default function PracticePage() {
 
       {/* Right Panel — Code Editor */}
       <div className="w-1/2 flex flex-col">
-        <p className="text-muted-foreground text-sm p-6">Code editor placeholder — Steps 15-16</p>
+        <CodeEditor
+          language={language}
+          code={code}
+          onLanguageChange={setLanguage}
+          onCodeChange={setCode}
+          onRun={() => { /* Phase 5: Code execution */ }}
+          onSubmit={() => { /* Phase 6: AI review */ }}
+        />
       </div>
     </div>
   );
