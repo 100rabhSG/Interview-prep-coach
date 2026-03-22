@@ -1,13 +1,11 @@
 import { Language } from '@/types';
 
-const JUDGE0_API_URL = process.env.JUDGE0_API_URL!;
-const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY!;
-
-if (!JUDGE0_API_URL) {
-  throw new Error('Please define the JUDGE0_API_URL environment variable in .env.local');
-}
-if (!JUDGE0_API_KEY) {
-  throw new Error('Please define the JUDGE0_API_KEY environment variable in .env.local');
+function getConfig() {
+  const url = process.env.JUDGE0_API_URL;
+  const key = process.env.JUDGE0_API_KEY;
+  if (!url) throw new Error('Please define the JUDGE0_API_URL environment variable in .env.local');
+  if (!key) throw new Error('Please define the JUDGE0_API_KEY environment variable in .env.local');
+  return { url, key };
 }
 
 // Judge0 language IDs (CE variant)
@@ -58,12 +56,14 @@ export async function submitBatch(
     memory_limit: 128000,
   }));
 
-  const res = await fetch(`${JUDGE0_API_URL}/submissions/batch?base64_encoded=false`, {
+  const { url, key } = getConfig();
+
+  const res = await fetch(`${url}/submissions/batch?base64_encoded=false`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-RapidAPI-Key': JUDGE0_API_KEY,
-      'X-RapidAPI-Host': new URL(JUDGE0_API_URL).host,
+      'X-RapidAPI-Key': key,
+      'X-RapidAPI-Host': new URL(url).host,
     },
     body: JSON.stringify({ submissions }),
   });
@@ -86,15 +86,16 @@ export async function pollResults(
   maxAttempts = 15,
   delayMs = 2000
 ): Promise<Judge0Result[]> {
+  const { url, key } = getConfig();
   const tokenString = tokens.join(',');
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const res = await fetch(
-      `${JUDGE0_API_URL}/submissions/batch?tokens=${tokenString}&base64_encoded=false&fields=token,stdout,stderr,status,time,memory`,
+      `${url}/submissions/batch?tokens=${tokenString}&base64_encoded=false&fields=token,stdout,stderr,status,time,memory`,
       {
         headers: {
-          'X-RapidAPI-Key': JUDGE0_API_KEY,
-          'X-RapidAPI-Host': new URL(JUDGE0_API_URL).host,
+          'X-RapidAPI-Key': key,
+          'X-RapidAPI-Host': new URL(url).host,
         },
       }
     );
