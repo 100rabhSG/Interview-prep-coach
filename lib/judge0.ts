@@ -20,104 +20,72 @@ export function getLanguageId(language: Language): number {
   return LANGUAGE_IDS[language];
 }
 
-interface Judge0Submission {
-  source_code: string;
-  language_id: number;
-  stdin: string;
-  expected_output: string;
-  cpu_time_limit?: number;
-  memory_limit?: number;
-}
-
 interface Judge0Result {
   token: string;
   stdout: string | null;
   stderr: string | null;
+  compile_output: string | null;
   status: { id: number; description: string };
   time: string | null;
   memory: number | null;
 }
 
-/**
- * Submit a batch of test cases to Judge0.
- * Returns an array of submission tokens.
- */
-export async function submitBatch(
-  code: string,
-  language: Language,
-  testCases: Array<{ input: string; expectedOutput: string }>
-): Promise<string[]> {
-  const submissions: Judge0Submission[] = testCases.map((tc) => ({
-    source_code: code,
-    language_id: getLanguageId(language),
-    stdin: tc.input,
-    expected_output: tc.expectedOutput,
-    cpu_time_limit: 10,
-    memory_limit: 128000,
-  }));
+function toBase64(str: string): string {
+  return Buffer.from(str).toString('base64');
+}
 
-  const { url, key } = getConfig();
-
-  const res = await fetch(`${url}/submissions/batch?base64_encoded=false`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-RapidAPI-Key': key,
-      'X-RapidAPI-Host': new URL(url).host,
-    },
-    body: JSON.stringify({ submissions }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Judge0 submission failed: ${res.status} ${text}`);
-  }
-
-  const data: Array<{ token: string }> = await res.json();
-  return data.map((d) => d.token);
+function fromBase64(str: string | null): string | null {
+  if (!str) return null;
+  return Buffer.from(str, 'base64').toString('utf-8');
 }
 
 /**
- * Poll Judge0 for results of a batch submission.
- * Retries until all submissions are done or max attempts reached.
+ * Submit test cases to Judge0 and wait for results.
  */
-export async function pollResults(
-  tokens: string[],
-  maxAttempts = 15,
-  delayMs = 2000
+export async function executeCode(
+  code: string,
+  language: Language,
+  testCases: Array<{ input: string; expectedOutput: string }>
 ): Promise<Judge0Result[]> {
   const { url, key } = getConfig();
-  const tokenString = tokens.join(',');
+  const langId = getLanguageId(language);
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(
-      `${url}/submissions/batch?tokens=${tokenString}&base64_encoded=false&fields=token,stdout,stderr,status,time,memory`,
-      {
-        headers: {
-          'X-RapidAPI-Key': key,
-          'X-RapidAPI-Host': new URL(url).host,
-        },
-      }
-    );
+  // Submit each test case with wait=true and base64 encoding
+  const results: Judge0Result[] = [];
+  for (const tc of testCases) {
+    const res = await fetch(`${url}/submissions?base64_encoded=true&wait=true`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-RapidAPI-Key': key,
+        'X-RapidAPI-Host': new URL(url).host,
+      },
+      body: JSON.stringify({
+        source_code: toBase64(code),
+        language_id: langId,
+        stdin: toBase64(tc.input),
+        expected_output: toBase64(tc.expectedOutput),
+        cpu_time_limit: 10,
+        memory_limit: 128000,
+      }),
+    });
 
     if (!res.ok) {
-      throw new Error(`Judge0 polling failed: ${res.status}`);
+      const text = await res.text();
+      throw new Error(`Judge0 execution failed: ${res.status} ${text}`);
     }
 
-    const data: { submissions: Judge0Result[] } = await res.json();
-    const allDone = data.submissions.every(
-      (s) => s.status.id !== 1 && s.status.id !== 2 // 1=In Queue, 2=Processing
-    );
-
-    if (allDone) {
-      return data.submissions;
-    }
-
-    // Wait before next poll
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    const data = await res.json();
+    // Decode base64 response fields
+    results.push({
+      ...data,
+      stdout: fromBase64(data.stdout),
+      stderr: fromBase64(data.stderr),
+      compile_output: fromBase64(data.compile_output),
+    });
   }
 
-  throw new Error('Code execution timed out. Please try again.');
+  return results;
 }
 
 export { type Judge0Result };

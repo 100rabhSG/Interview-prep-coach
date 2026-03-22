@@ -29,7 +29,8 @@ export default function PracticePage() {
   const [error, setError] = useState<string | null>(null);
   const [language, setLanguage] = useState<Language>('cpp');
   const [code, setCode] = useState('');
-  const [hints, setHints] = useState<string[]>([]);
+  const [allHints, setAllHints] = useState<string[]>([]);
+  const [revealedHintCount, setRevealedHintCount] = useState(0);
   const [hintDialogOpen, setHintDialogOpen] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -37,7 +38,8 @@ export default function PracticePage() {
   const generateProblem = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setHints([]);
+    setAllHints([]);
+    setRevealedHintCount(0);
     setTestResults([]);
     try {
       const res = await fetch('/api/problems/generate', {
@@ -123,7 +125,7 @@ export default function PracticePage() {
         <ProblemPanel
           problem={problem}
           difficulty={difficulty}
-          hintsUsed={hints.length}
+          hintsUsed={revealedHintCount}
           onRequestHint={() => setHintDialogOpen(true)}
           onNewProblem={generateProblem}
         />
@@ -132,8 +134,10 @@ export default function PracticePage() {
           onOpenChange={setHintDialogOpen}
           problemTitle={problem.title}
           problemDescription={problem.description}
-          hints={hints}
-          onHintReceived={(hint) => setHints((prev) => [...prev, hint])}
+          allHints={allHints}
+          revealedCount={revealedHintCount}
+          onHintsLoaded={(hints) => setAllHints(hints)}
+          onRevealNext={() => setRevealedHintCount((c) => Math.min(c + 1, 3))}
         />
       </div>
 

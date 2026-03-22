@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { model, buildHintPrompt } from '@/lib/gemini';
+import { model, buildAllHintsPrompt } from '@/lib/gemini';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { problemTitle, problemDescription, hintLevel } = body;
+    const { problemTitle, problemDescription } = body;
 
     // Validate inputs
     if (!problemTitle || typeof problemTitle !== 'string') {
@@ -13,22 +13,19 @@ export async function POST(request: NextRequest) {
     if (!problemDescription || typeof problemDescription !== 'string') {
       return NextResponse.json({ error: 'problemDescription is required' }, { status: 400 });
     }
-    if (![1, 2, 3].includes(hintLevel)) {
-      return NextResponse.json({ error: 'hintLevel must be 1, 2, or 3' }, { status: 400 });
-    }
 
-    // Generate hint via Gemini
-    const prompt = buildHintPrompt(problemTitle, problemDescription, hintLevel as 1 | 2 | 3);
+    // Generate all 3 hints in a single Gemini call
+    const prompt = buildAllHintsPrompt(problemTitle, problemDescription);
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
     // Parse response
-    let parsed: { hint: string; level: number };
+    let parsed: { hints: string[] };
     try {
       parsed = JSON.parse(responseText);
-      if (!parsed.hint || typeof parsed.hint !== 'string') {
+      if (!Array.isArray(parsed.hints) || parsed.hints.length < 3) {
         return NextResponse.json(
-          { error: 'AI returned an invalid hint. Please try again.' },
+          { error: 'AI returned invalid hints. Please try again.' },
           { status: 502 }
         );
       }
@@ -39,12 +36,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ hint: parsed.hint, level: parsed.level });
+    return NextResponse.json({ hints: parsed.hints.slice(0, 3) });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Hint generation error:', message);
     return NextResponse.json(
-      { error: 'Failed to generate hint. Please try again later.' },
+      { error: 'Failed to generate hints. Please try again later.' },
       { status: 500 }
     );
   }

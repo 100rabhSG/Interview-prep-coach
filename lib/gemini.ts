@@ -52,7 +52,57 @@ Requirements:
 - Include 2 examples with input, output, and explanation
 - Include 3-5 test cases covering: basic case, edge case (empty/single element/boundary), and a larger case
 - Provide the optimal time and space complexity
-- For test cases: input and expectedOutput must be strings that can be parsed (e.g., "[1,2,3]" for arrays, "5" for numbers, "\\"hello\\"" for strings)
+- For test cases: input and expectedOutput must be strings. Each test case's "input" is what will be passed to the program on stdin (one value per line if multiple inputs). "expectedOutput" is what the program should print to stdout.
+
+CRITICAL — starterCode rules:
+The starterCode MUST be a COMPLETE, COMPILABLE, RUNNABLE program (not just a function signature). It must include:
+1. All necessary imports/includes(must use bits/stdc++.h for C++)/headers
+2. A solution function with an empty body marked with a TODO comment for the student to implement
+3. A main() function (or equivalent entry point) that:
+   - Reads input from stdin (parsing the format used in testCases)
+   - Calls the solution function
+   - Prints the result to stdout (matching expectedOutput format exactly)
+
+Example for C++ if the problem takes an array and returns an int:
+\`\`\`
+#include <bits/stdc++.h>
+using namespace std;
+
+int solve(vector<int>& nums) {
+    // TODO: Implement your solution here
+    return 0;
+}
+
+int main() {
+    string line;
+    getline(cin, line);
+    // parse "[1,2,3]" into vector
+    line = line.substr(1, line.size() - 2);
+    vector<int> nums;
+    stringstream ss(line);
+    string token;
+    while (getline(ss, token, ',')) {
+        nums.push_back(stoi(token));
+    }
+    cout << solve(nums) << endl;
+    return 0;
+}
+\`\`\`
+
+Example for Python if the problem takes an array and returns an int:
+\`\`\`
+import json, sys
+
+def solve(nums):
+    # TODO: Implement your solution here
+    return 0
+
+if __name__ == "__main__":
+    nums = json.loads(input())
+    print(solve(nums))
+\`\`\`
+
+The student should ONLY need to fill in the solution function body. The I/O is already handled.
 
 Respond with ONLY valid JSON in this exact format:
 {
@@ -77,39 +127,37 @@ Respond with ONLY valid JSON in this exact format:
     "space": "O(n)"
   },
   "starterCode": {
-    "${language}": "// function signature with parameters and return type"
+    "${language}": "// Complete runnable program with main() and I/O handling. Solution function body left as TODO."
   }
 }`;
 }
 
 /**
- * Build the prompt for generating a progressive hint.
+ * Build the prompt for generating all 3 progressive hints in a single call.
  */
-export function buildHintPrompt(
+export function buildAllHintsPrompt(
   problemTitle: string,
   problemDescription: string,
-  hintLevel: 1 | 2 | 3
 ): string {
-  const levelGuide: Record<1 | 2 | 3, string> = {
-    1: 'Give a gentle nudge about the APPROACH direction. Do NOT mention specific data structures or algorithms. Just hint at what to think about.',
-    2: 'Suggest the specific DATA STRUCTURE or ALGORITHM to use. Explain why it fits this problem, but do NOT give implementation details.',
-    3: 'Provide a PSEUDOCODE outline of the solution. Show the step-by-step logic without writing actual code.',
-  };
-
-  return `You are a helpful coding interview coach. The student is working on this problem and needs a hint.
+  return `You are a helpful coding interview coach. The student is working on this problem and needs hints.
 
 **Problem:** ${problemTitle}
 **Description:** ${problemDescription}
 
-**Hint Level:** ${hintLevel}/3
-**Instructions:** ${levelGuide[hintLevel]}
+Generate 3 progressive hints, each more revealing than the last:
+- Hint 1 (Approach): A gentle nudge about the approach direction. Do NOT mention specific data structures or algorithms. Just hint at what to think about. (2-4 sentences)
+- Hint 2 (Algorithm): Suggest the specific data structure or algorithm to use. Explain why it fits this problem, but do NOT give implementation details. (2-4 sentences)
+- Hint 3 (Pseudocode): Provide a pseudocode outline of the solution. Show the step-by-step logic without writing actual code.
 
-Keep the hint concise (2-4 sentences for levels 1-2, pseudocode block for level 3). Use markdown formatting.
+Use markdown formatting.
 
 Respond with ONLY valid JSON:
 {
-  "hint": "Your hint text here with markdown formatting",
-  "level": ${hintLevel}
+  "hints": [
+    "Hint 1 text",
+    "Hint 2 text",
+    "Hint 3 text"
+  ]
 }`;
 }
 

@@ -15,8 +15,10 @@ interface HintDialogProps {
   onOpenChange: (open: boolean) => void;
   problemTitle: string;
   problemDescription: string;
-  hints: string[];
-  onHintReceived: (hint: string) => void;
+  allHints: string[];
+  revealedCount: number;
+  onHintsLoaded: (hints: string[]) => void;
+  onRevealNext: () => void;
 }
 
 const hintLevelLabels = [
@@ -30,34 +32,38 @@ export default function HintDialog({
   onOpenChange,
   problemTitle,
   problemDescription,
-  hints,
-  onHintReceived,
+  allHints,
+  revealedCount,
+  onHintsLoaded,
+  onRevealNext,
 }: HintDialogProps) {
   const [loading, setLoading] = useState(false);
+  const revealedHints = allHints.slice(0, revealedCount);
+  const nextLevel = revealedCount + 1;
+  const hintsLoaded = allHints.length > 0;
 
-  const nextLevel = (hints.length + 1) as 1 | 2 | 3;
-
-  const fetchHint = async () => {
-    if (hints.length >= 3) return;
-    setLoading(true);
-    try {
-      const res = await fetch('/api/problems/hint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          problemTitle,
-          problemDescription,
-          hintLevel: nextLevel,
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to fetch hint');
-      const data = await res.json();
-      onHintReceived(data.hint);
-    } catch (err) {
-      console.error('Hint error:', err);
-    } finally {
-      setLoading(false);
+  const fetchAndReveal = async () => {
+    // If hints not loaded yet, fetch all 3 from API (1 Gemini call)
+    if (!hintsLoaded) {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/problems/hint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ problemTitle, problemDescription }),
+        });
+        if (!res.ok) throw new Error('Failed to fetch hints');
+        const data = await res.json();
+        onHintsLoaded(data.hints);
+      } catch (err) {
+        console.error('Hint error:', err);
+        return;
+      } finally {
+        setLoading(false);
+      }
     }
+    // Reveal the next hint
+    onRevealNext();
   };
 
   return (
@@ -66,13 +72,13 @@ export default function HintDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-yellow-500" />
-            Hints ({hints.length}/3)
+            Hints ({revealedCount}/3)
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 mt-2">
           {/* Show revealed hints */}
-          {hints.map((hint, i) => (
+          {revealedHints.map((hint, i) => (
             <div key={i} className="space-y-1">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Level {i + 1}: {hintLevelLabels[i]}
@@ -84,16 +90,16 @@ export default function HintDialog({
           ))}
 
           {/* Empty state */}
-          {hints.length === 0 && (
+          {revealedCount === 0 && !loading && (
             <p className="text-sm text-muted-foreground text-center py-4">
               No hints revealed yet. Each hint gives more detail about the solution.
             </p>
           )}
 
-          {/* Get next hint button */}
-          {hints.length < 3 && (
+          {/* Reveal next hint button */}
+          {revealedCount < 3 && (
             <Button
-              onClick={fetchHint}
+              onClick={fetchAndReveal}
               disabled={loading}
               className="w-full"
               variant="outline"
@@ -103,11 +109,11 @@ export default function HintDialog({
               ) : (
                 <ChevronRight className="h-4 w-4 mr-2" />
               )}
-              Get Hint {nextLevel}: {hintLevelLabels[nextLevel - 1]}
+              {loading ? 'Generating hints...' : `Reveal Hint ${nextLevel}: ${hintLevelLabels[nextLevel - 1]}`}
             </Button>
           )}
 
-          {hints.length >= 3 && (
+          {revealedCount >= 3 && (
             <p className="text-xs text-muted-foreground text-center">
               All hints revealed.
             </p>

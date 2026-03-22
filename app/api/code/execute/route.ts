@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { submitBatch, pollResults } from '@/lib/judge0';
+import { executeCode } from '@/lib/judge0';
 import { Language } from '@/types';
 
 const VALID_LANGUAGES: Language[] = ['python', 'javascript', 'java', 'cpp'];
@@ -23,17 +23,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'testCases array is required' }, { status: 400 });
     }
 
-    // Submit to Judge0
-    const tokens = await submitBatch(code, language, testCases);
-
-    // Poll for results
-    const results = await pollResults(tokens);
+    // Execute code via Judge0
+    const results = await executeCode(code, language, testCases);
 
     // Map Judge0 results to our TestResult format
     const testResults = results.map((result, i) => ({
       input: testCases[i].input,
       expectedOutput: testCases[i].expectedOutput,
-      actualOutput: (result.stdout || result.stderr || '').trim(),
+      actualOutput: (result.stdout || result.compile_output || result.stderr || '').trim(),
       passed: result.status.id === 3, // 3 = Accepted
       executionTime: result.time ? parseFloat(result.time) : undefined,
       memoryUsed: result.memory || undefined,
