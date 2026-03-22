@@ -161,4 +161,59 @@ Respond with ONLY valid JSON:
 }`;
 }
 
+/**
+ * Build the prompt for AI code review.
+ */
+export function buildReviewPrompt(
+  problemTitle: string,
+  problemDescription: string,
+  userSolution: string,
+  language: Language,
+  testResults: Array<{ input: string; expectedOutput: string; actualOutput: string; passed: boolean }>,
+): string {
+  const passedCount = testResults.filter((t) => t.passed).length;
+  const totalCount = testResults.length;
+
+  const testSummary = testResults
+    .map(
+      (t, i) =>
+        `Test ${i + 1}: ${t.passed ? 'PASSED' : 'FAILED'} | Input: ${t.input} | Expected: ${t.expectedOutput} | Got: ${t.actualOutput}`
+    )
+    .join('\n');
+
+  return `You are an expert coding interview reviewer. Analyze the student's solution and provide detailed feedback.
+
+**Problem:** ${problemTitle}
+**Description:** ${problemDescription}
+
+**Language:** ${language}
+**Student's Solution:**
+\`\`\`${language}
+${userSolution}
+\`\`\`
+
+**Test Results:** ${passedCount}/${totalCount} passed
+${testSummary}
+
+Provide a thorough review covering:
+1. **Correctness** — Does the solution correctly solve the problem? If tests failed, explain why.
+2. **Time Complexity** — What is the time complexity? Is it optimal?
+3. **Space Complexity** — What is the space complexity? Can it be improved?
+4. **Issues** — List specific bugs, edge cases missed, or logical errors (empty array if none).
+5. **Optimizations** — Suggest concrete improvements (empty array if already optimal).
+6. **Score** — Rate 1-10 (10 = perfect, optimal solution passing all tests).
+7. **Optimal Solution** — Provide the optimal solution code in ${language}.
+
+Respond with ONLY valid JSON:
+{
+  "correctness": "Assessment of correctness...",
+  "timeComplexity": "O(n) — explanation...",
+  "spaceComplexity": "O(1) — explanation...",
+  "issues": ["Issue 1", "Issue 2"],
+  "optimizations": ["Optimization 1"],
+  "score": 7,
+  "optimalSolution": "// optimal code here"
+}`;
+}
+
 export { model };
