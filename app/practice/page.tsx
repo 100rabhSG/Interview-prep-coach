@@ -119,6 +119,28 @@ export default function PracticePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setReview(data.review);
+
+      // Persist the completed session for authenticated users (guest mode is handled by the API).
+      try {
+        await fetch('/api/progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic,
+            difficulty,
+            language,
+            problem,
+            userSolution: code,
+            testResults,
+            aiReview: data.review,
+            hintsUsed: revealedHintCount,
+          }),
+        });
+      } catch (saveErr) {
+        // Keep review UX responsive even if persistence fails.
+        console.error('Progress save error:', saveErr);
+      }
+
       setReviewOpen(true);
     } catch (err) {
       console.error('Submit error:', err);
