@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import PracticeSession from '@/models/PracticeSession';
 import { Topic, Difficulty, Language, SessionStatus, Problem, TestResult, AIReview } from '@/types';
+import mongoose from 'mongoose';
 
 const VALID_TOPICS: Topic[] = [
   'arrays', 'strings', 'linked-lists', 'trees', 'graphs',
@@ -167,8 +168,10 @@ export async function GET(request: NextRequest) {
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - days);
 
+    const userObjectId = new mongoose.Types.ObjectId(session.user.id);
+
     const baseFilter: Record<string, unknown> = {
-      userId: session.user.id,
+      userId: userObjectId,
       createdAt: { $gte: sinceDate },
     };
 
