@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Topic, Difficulty, Language, Problem } from '@/types';
+import { Topic, Difficulty, Language, Problem, TestResult } from '@/types';
 import { Button } from '@/components/ui/button';
 import ProblemPanel from '@/components/ProblemPanel';
 import CodeEditor from '@/components/CodeEditor';
 import HintDialog from '@/components/HintDialog';
+import TestResults from '@/components/TestResults';
 import { Loader2, RefreshCw } from 'lucide-react';
 
 const VALID_TOPICS: Topic[] = [
@@ -30,11 +31,14 @@ export default function PracticePage() {
   const [code, setCode] = useState('');
   const [hints, setHints] = useState<string[]>([]);
   const [hintDialogOpen, setHintDialogOpen] = useState(false);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
 
   const generateProblem = useCallback(async () => {
     setLoading(true);
     setError(null);
     setHints([]);
+    setTestResults([]);
     try {
       const res = await fetch('/api/problems/generate', {
         method: 'POST',
@@ -60,6 +64,30 @@ export default function PracticePage() {
   useEffect(() => {
     generateProblem();
   }, [generateProblem]);
+
+  const handleRun = async () => {
+    if (!problem) return;
+    setIsRunning(true);
+    setTestResults([]);
+    try {
+      const res = await fetch('/api/code/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          language,
+          testCases: problem.testCases,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setTestResults(data.testResults);
+    } catch (err) {
+      console.error('Run error:', err);
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   // Loading state
   if (loading) {
@@ -116,9 +144,11 @@ export default function PracticePage() {
           code={code}
           onLanguageChange={setLanguage}
           onCodeChange={setCode}
-          onRun={() => { /* Phase 5: Code execution */ }}
+          onRun={handleRun}
           onSubmit={() => { /* Phase 6: AI review */ }}
+          isRunning={isRunning}
         />
+        {testResults.length > 0 && <TestResults results={testResults} />}
       </div>
     </div>
   );
