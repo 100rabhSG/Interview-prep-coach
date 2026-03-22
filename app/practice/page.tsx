@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Topic, Difficulty, Language, Problem, TestResult } from '@/types';
+import { Topic, Difficulty, Language, Problem, TestResult, AIReview } from '@/types';
 import { Button } from '@/components/ui/button';
 import ProblemPanel from '@/components/ProblemPanel';
 import CodeEditor from '@/components/CodeEditor';
 import HintDialog from '@/components/HintDialog';
 import TestResults from '@/components/TestResults';
+import ReviewPanel from '@/components/ReviewPanel';
 import { Loader2, RefreshCw } from 'lucide-react';
 
 const VALID_TOPICS: Topic[] = [
@@ -34,6 +35,9 @@ export default function PracticePage() {
   const [hintDialogOpen, setHintDialogOpen] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
+  const [review, setReview] = useState<AIReview | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const generateProblem = useCallback(async () => {
     setLoading(true);
@@ -41,6 +45,7 @@ export default function PracticePage() {
     setAllHints([]);
     setRevealedHintCount(0);
     setTestResults([]);
+    setReview(null);
     try {
       const res = await fetch('/api/problems/generate', {
         method: 'POST',
@@ -88,6 +93,37 @@ export default function PracticePage() {
       console.error('Run error:', err);
     } finally {
       setIsRunning(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!problem || testResults.length === 0) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          problemTitle: problem.title,
+          problemDescription: problem.description,
+          userSolution: code,
+          language,
+          testResults: testResults.map((t) => ({
+            input: t.input,
+            expectedOutput: t.expectedOutput,
+            actualOutput: t.actualOutput,
+            passed: t.passed,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setReview(data.review);
+      setReviewOpen(true);
+    } catch (err) {
+      console.error('Submit error:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,11 +185,18 @@ export default function PracticePage() {
           onLanguageChange={setLanguage}
           onCodeChange={setCode}
           onRun={handleRun}
-          onSubmit={() => { /* Phase 6: AI review */ }}
+          onSubmit={handleSubmit}
           isRunning={isRunning}
+          isSubmitting={isSubmitting}
         />
         {testResults.length > 0 && <TestResults results={testResults} />}
       </div>
+
+      <ReviewPanel
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        review={review}
+      />
     </div>
   );
 }
