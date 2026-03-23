@@ -17,8 +17,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Prep Coach — AI Interview Prep",
-  description: "Practice coding interviews with AI-generated problems, real code execution, and personalized feedback.",
+  title: {
+    default: "Prep Coach — AI Interview Prep",
+    template: "%s | Prep Coach",
+  },
+  description:
+    "Practice coding interviews with AI-generated problems, real code execution, and personalized feedback. Track your progress and crush your next interview.",
+  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  openGraph: {
+    title: "Prep Coach — AI Interview Prep",
+    description:
+      "Practice coding interviews with AI-generated problems, real code execution, and personalized feedback.",
+    siteName: "Prep Coach",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "Prep Coach — AI Interview Prep",
+    description:
+      "Practice coding interviews with AI-generated problems, real code execution, and personalized feedback.",
+  },
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
