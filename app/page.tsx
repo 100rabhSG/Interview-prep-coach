@@ -30,7 +30,7 @@ export default function Home() {
           Practice coding interviews with AI-generated problems, real code execution, 
           and personalized feedback. Track your progress and crush your next interview.
         </p>
-        <div className="flex justify-center gap-8 text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-8 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4" />
             <span>AI-Generated Problems</span>

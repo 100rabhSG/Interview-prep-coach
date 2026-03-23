@@ -9,10 +9,11 @@ import CodeEditor from '@/components/CodeEditor';
 import HintDialog from '@/components/HintDialog';
 import TestResults from '@/components/TestResults';
 import ReviewPanel from '@/components/ReviewPanel';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { RefreshCw, BookOpen, Code2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const VALID_TOPICS: Topic[] = [
   'arrays', 'strings', 'linked-lists', 'trees', 'graphs',
@@ -41,6 +42,7 @@ export default function PracticePage() {
   const [review, setReview] = useState<AIReview | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activePanel, setActivePanel] = useState<'problem' | 'code'>('problem');
 
   const generateProblem = useCallback(async () => {
     setLoading(true);
@@ -160,9 +162,9 @@ export default function PracticePage() {
   // Loading state — show skeleton matching the real layout
   if (loading) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
         {/* Left Panel — Problem Skeleton */}
-        <div className="w-1/2 border-r overflow-y-auto p-6">
+        <div className="hidden md:block md:w-1/2 border-r overflow-y-auto p-6">
           <div className="space-y-6">
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -205,8 +207,17 @@ export default function PracticePage() {
           </div>
         </div>
 
+        {/* Mobile skeleton */}
+        <div className="flex-1 md:hidden p-4 space-y-4">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="h-28 w-full rounded-lg" />
+        </div>
+
         {/* Right Panel — Editor Skeleton */}
-        <div className="w-1/2 flex flex-col">
+        <div className="hidden md:flex md:w-1/2 flex-col">
           <div className="flex items-center justify-between border-b px-4 py-2 bg-muted/30">
             <Skeleton className="h-9 w-40" />
             <div className="flex gap-2">
@@ -244,9 +255,40 @@ export default function PracticePage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">
+      {/* Mobile Panel Switcher */}
+      <div className="flex md:hidden border-b">
+        <button
+          onClick={() => setActivePanel('problem')}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors',
+            activePanel === 'problem'
+              ? 'border-b-2 border-primary text-foreground'
+              : 'text-muted-foreground'
+          )}
+        >
+          <BookOpen className="h-4 w-4" />
+          Problem
+        </button>
+        <button
+          onClick={() => setActivePanel('code')}
+          className={cn(
+            'flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors',
+            activePanel === 'code'
+              ? 'border-b-2 border-primary text-foreground'
+              : 'text-muted-foreground'
+          )}
+        >
+          <Code2 className="h-4 w-4" />
+          Code
+        </button>
+      </div>
+
       {/* Left Panel — Problem Description */}
-      <div className="w-1/2 border-r overflow-y-auto p-6">
+      <div className={cn(
+        'md:w-1/2 md:border-r overflow-y-auto p-4 md:p-6',
+        activePanel === 'problem' ? 'flex-1 md:flex-none' : 'hidden md:block'
+      )}>
         <ProblemPanel
           problem={problem}
           difficulty={difficulty}
@@ -267,7 +309,10 @@ export default function PracticePage() {
       </div>
 
       {/* Right Panel — Code Editor */}
-      <div className="w-1/2 flex flex-col">
+      <div className={cn(
+        'md:w-1/2 flex flex-col',
+        activePanel === 'code' ? 'flex-1 md:flex-none' : 'hidden md:flex'
+      )}>
         <CodeEditor
           language={language}
           code={code}
