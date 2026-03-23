@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb, Loader2, ChevronRight } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface HintDialogProps {
   open: boolean;
@@ -57,7 +58,8 @@ export default function HintDialog({
         const data = await res.json();
         onHintsLoaded(data.hints);
       } catch (err) {
-        console.error('Hint error:', err);
+        const message = err instanceof Error ? err.message : 'Failed to generate hints';
+        toast.error('Hint failed', { description: message });
         return;
       } finally {
         setLoading(false);

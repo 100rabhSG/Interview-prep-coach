@@ -4,6 +4,7 @@ import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import Navbar from "@/components/Navbar";
 import GuestBanner from "@/components/GuestBanner";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
           <Navbar />
           <GuestBanner />
           <main>{children}</main>
+          <Toaster richColors position="top-right" />
         </SessionProvider>
       </body>
     </html>

@@ -12,6 +12,7 @@ import ReviewPanel from '@/components/ReviewPanel';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
 const VALID_TOPICS: Topic[] = [
   'arrays', 'strings', 'linked-lists', 'trees', 'graphs',
@@ -92,7 +93,8 @@ export default function PracticePage() {
       if (!res.ok) throw new Error(data.error);
       setTestResults(data.testResults);
     } catch (err) {
-      console.error('Run error:', err);
+      const message = err instanceof Error ? err.message : 'Code execution failed';
+      toast.error('Run failed', { description: message });
     } finally {
       setIsRunning(false);
     }
@@ -148,7 +150,9 @@ export default function PracticePage() {
 
       setReviewOpen(true);
     } catch (err) {
-      console.error('Submit error:', err);
+      const message = err instanceof Error ? err.message : 'Failed to get AI review';
+      toast.error('Review failed', { description: message });
+      setReviewOpen(false);
       setIsSubmitting(false);
     }
   };

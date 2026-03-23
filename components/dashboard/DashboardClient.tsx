@@ -30,6 +30,7 @@ import {
   Filler,
 } from 'chart.js';
 import { Radar, Doughnut, Line } from 'react-chartjs-2';
+import { toast } from 'sonner';
 
 ChartJS.register(
   RadialLinearScale,
@@ -130,7 +131,9 @@ export default function DashboardClient() {
       if (!res.ok) throw new Error(body.error || 'Failed to load dashboard');
       setData(body as ProgressResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      setError(message);
+      toast.error('Dashboard load failed', { description: message });
     } finally {
       setLoading(false);
     }
