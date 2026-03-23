@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { model, buildAllHintsPrompt } from '@/lib/gemini';
+import { rateLimit } from '@/lib/rateLimit';
+
+const RATE_LIMIT = { maxRequests: 2, windowMs: 60_000 };
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, RATE_LIMIT);
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { problemTitle, problemDescription } = body;

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { model, buildProblemPrompt } from '@/lib/gemini';
 import { Topic, Difficulty, Language, Problem } from '@/types';
+import { rateLimit } from '@/lib/rateLimit';
+
+const RATE_LIMIT = { maxRequests: 5, windowMs: 60_000 };
 
 const VALID_TOPICS: Topic[] = [
   'arrays', 'strings', 'linked-lists', 'trees', 'graphs',
@@ -26,6 +29,8 @@ function validateProblem(data: unknown): data is Problem {
 }
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, RATE_LIMIT);
+  if (limited) return limited;
   try {
     const body = await request.json();
     const { topic, difficulty, language } = body;

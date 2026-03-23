@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { model, buildReviewPrompt } from '@/lib/gemini';
 import { Language, AIReview } from '@/types';
+import { rateLimit } from '@/lib/rateLimit';
+
+const RATE_LIMIT = { maxRequests: 1, windowMs: 60_000 };
 
 const VALID_LANGUAGES: Language[] = ['python', 'javascript', 'java', 'cpp'];
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, RATE_LIMIT);
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { problemTitle, problemDescription, userSolution, language, testResults } = body;
