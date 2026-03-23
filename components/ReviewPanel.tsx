@@ -22,11 +22,13 @@ import {
   EyeOff,
   Star,
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ReviewPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   review: AIReview | null;
+  isLoading?: boolean;
 }
 
 function ScoreBadge({ score }: { score: number }) {
@@ -43,10 +45,11 @@ export default function ReviewPanel({
   open,
   onOpenChange,
   review,
+  isLoading = false,
 }: ReviewPanelProps) {
   const [showSolution, setShowSolution] = useState(false);
 
-  if (!review) return null;
+  if (!review && !isLoading) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,11 +57,84 @@ export default function ReviewPanel({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between pr-8">
             AI Code Review
-            <ScoreBadge score={review.score} />
+            {isLoading ? (
+              <Skeleton className="h-8 w-20 rounded-full" />
+            ) : review ? (
+              <ScoreBadge score={review.score} />
+            ) : null}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 px-4 pb-8">
+        {isLoading ? (
+          <div className="space-y-6 px-4 pb-8">
+            {/* Correctness skeleton */}
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/5" />
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Complexity skeleton */}
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-36" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Issues skeleton */}
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Optimizations skeleton */}
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </section>
+
+            <Separator />
+
+            {/* Optimal solution skeleton */}
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Skeleton className="h-4 w-4 rounded-full" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+              <Skeleton className="h-32 w-full rounded-lg" />
+            </section>
+          </div>
+        ) : review ? (
+          <div className="space-y-6 px-4 pb-8">
           {/* Correctness */}
           <section>
             <h3 className="text-sm font-semibold flex items-center gap-2 mb-2">
@@ -178,6 +254,7 @@ export default function ReviewPanel({
             )}
           </section>
         </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );

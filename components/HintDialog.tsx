@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Lightbulb, Loader2, ChevronRight } from 'lucide-react';
 
 interface HintDialogProps {
@@ -94,6 +95,18 @@ export default function HintDialog({
             <p className="text-sm text-muted-foreground text-center py-4">
               No hints revealed yet. Each hint gives more detail about the solution.
             </p>
+          )}
+
+          {/* Loading skeleton */}
+          {loading && (
+            <div className="space-y-1">
+              <Skeleton className="h-3 w-36" />
+              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </div>
           )}
 
           {/* Reveal next hint button */}

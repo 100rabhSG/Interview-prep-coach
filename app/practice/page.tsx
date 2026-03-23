@@ -10,6 +10,8 @@ import HintDialog from '@/components/HintDialog';
 import TestResults from '@/components/TestResults';
 import ReviewPanel from '@/components/ReviewPanel';
 import { Loader2, RefreshCw } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 const VALID_TOPICS: Topic[] = [
   'arrays', 'strings', 'linked-lists', 'trees', 'graphs',
@@ -99,6 +101,8 @@ export default function PracticePage() {
   const handleSubmit = async () => {
     if (!problem || testResults.length === 0) return;
     setIsSubmitting(true);
+    setReview(null);
+    setReviewOpen(true);
     try {
       const res = await fetch('/api/review', {
         method: 'POST',
@@ -119,6 +123,7 @@ export default function PracticePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setReview(data.review);
+      setIsSubmitting(false);
 
       // Persist the completed session for authenticated users (guest mode is handled by the API).
       try {
@@ -144,18 +149,76 @@ export default function PracticePage() {
       setReviewOpen(true);
     } catch (err) {
       console.error('Submit error:', err);
-    } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Loading state
+  // Loading state — show skeleton matching the real layout
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Generating your problem...</p>
+      <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+        {/* Left Panel — Problem Skeleton */}
+        <div className="w-1/2 border-r overflow-y-auto p-6">
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton className="h-6 w-16" />
+                <Skeleton className="h-8 w-28" />
+              </div>
+              <Skeleton className="h-8 w-3/4" />
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-5/6" />
+              <Skeleton className="h-4 w-4/5" />
+            </div>
+            <div>
+              <Skeleton className="h-4 w-24 mb-3" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-8 w-full rounded" />
+                <Skeleton className="h-8 w-full rounded" />
+                <Skeleton className="h-8 w-3/4 rounded" />
+              </div>
+            </div>
+            <Separator />
+            <div>
+              <Skeleton className="h-4 w-20 mb-3" />
+              <div className="space-y-4">
+                <Skeleton className="h-28 w-full rounded-lg" />
+                <Skeleton className="h-28 w-full rounded-lg" />
+              </div>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel — Editor Skeleton */}
+        <div className="w-1/2 flex flex-col">
+          <div className="flex items-center justify-between border-b px-4 py-2 bg-muted/30">
+            <Skeleton className="h-9 w-40" />
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-24" />
+            </div>
+          </div>
+          <div className="flex-1 bg-[#1e1e1e] p-4">
+            <div className="space-y-3 pt-2">
+              <Skeleton className="h-4 w-3/4 bg-gray-700" />
+              <Skeleton className="h-4 w-1/2 bg-gray-700" />
+              <Skeleton className="h-4 w-2/3 bg-gray-700" />
+              <Skeleton className="h-4 w-1/3 bg-gray-700" />
+              <Skeleton className="h-4 w-3/5 bg-gray-700" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -211,13 +274,37 @@ export default function PracticePage() {
           isRunning={isRunning}
           isSubmitting={isSubmitting}
         />
-        {testResults.length > 0 && <TestResults results={testResults} />}
+        {isRunning && (
+          <div className="border-t overflow-y-auto p-4 space-y-3">
+            <Skeleton className="h-5 w-36" />
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-4 rounded-full" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-3/4" />
+                    <Skeleton className="h-3 w-2/3" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {!isRunning && testResults.length > 0 && <TestResults results={testResults} />}
       </div>
 
       <ReviewPanel
         open={reviewOpen}
         onOpenChange={setReviewOpen}
         review={review}
+        isLoading={isSubmitting}
       />
     </div>
   );
