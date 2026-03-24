@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Topic, Difficulty, Language, Problem, TestResult, AIReview } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ const VALID_TOPICS: Topic[] = [
 ];
 const VALID_DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
 
-export default function PracticePage() {
+function PracticeContent() {
   const searchParams = useSearchParams();
   const topicParam = searchParams.get('topic') as Topic | null;
   const difficultyParam = searchParams.get('difficulty') as Difficulty | null;
@@ -356,5 +356,13 @@ export default function PracticePage() {
         isLoading={isSubmitting}
       />
     </div>
+  );
+}
+
+export default function PracticePage() {
+  return (
+    <Suspense>
+      <PracticeContent />
+    </Suspense>
   );
 }
