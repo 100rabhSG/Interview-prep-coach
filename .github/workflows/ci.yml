@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MONGODB_URI: mongodb://localhost:27017/test
+  NEXTAUTH_SECRET: ci-test-secret
+  NEXTAUTH_URL: http://localhost:3000
+  GOOGLE_CLIENT_ID: ci-test-id
+  GOOGLE_CLIENT_SECRET: ci-test-secret
+  GEMINI_API_KEY: ci-test-key
+  JUDGE0_API_URL: https://judge0-ce.p.rapidapi.com
+  JUDGE0_API_KEY: ci-test-key
+
+jobs:
+  ci:
+    name: Lint, Type-check & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Build
+        run: npm run build
