@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Mock next/server before importing rateLimit
 vi.mock('next/server', () => {
@@ -50,7 +50,7 @@ describe('rateLimit()', () => {
     rateLimit(request, opts);
     rateLimit(request, opts);
 
-    const result = rateLimit(request, opts) as { body: { error: string }; status: number };
+    const result = rateLimit(request, opts) as unknown as { body: { error: string }; status: number };
     expect(result).not.toBeNull();
     expect(result.status).toBe(429);
     expect(result.body.error).toMatch(/too many requests/i);
@@ -98,7 +98,7 @@ describe('rateLimit()', () => {
     const opts = { maxRequests: 1, windowMs: 60_000 };
 
     rateLimit(request, opts);
-    const result = rateLimit(request, opts) as { headers: Map<string, string> };
+    const result = rateLimit(request, opts) as unknown as { headers: Map<string, string> };
     expect(result).not.toBeNull();
     expect(result.headers.get('Retry-After')).toBeDefined();
   });
